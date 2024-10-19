@@ -152,12 +152,26 @@ def load_data(image_file, label_file):
     Returns:
         tuple: Scaled data and ground truth labels.
     """
-    image_data = sio.loadmat(image_file)
-    label_data = sio.loadmat(label_file)
-    data_key = image_file.split('/')[-1].split('.')[0]
-    label_key = label_file.split('/')[-1].split('.')[0]
-    data_all = image_data[data_key]
-    label = label_data[label_key]
+    # image_data = sio.loadmat(image_file)
+    # label_data = sio.loadmat(label_file)
+
+    f = h5py.File(image_file, 'r')
+    # Assuming the data key is the same as the file name without extension
+    data_key = list(f.keys())[0]  # Change this if the key is known
+    data_all = np.array(f[data_key])
+    print(data_all.shape)
+    
+    f = h5py.File(label_file, 'r')
+    # Assuming the label key is the same as the file name without extension
+    label_key = list(f.keys())[0]  # Change this if the key is known
+    label = np.array(f[label_key])
+    print(label_key.shape)
+    
+
+    # data_key = image_file.split('/')[-1].split('.')[0]
+    # label_key = label_file.split('/')[-1].split('.')[0]
+    # data_all = image_data[data_key]
+    # label = label_data[label_key]
     gt = label.reshape(np.prod(label.shape[:2]), )
 
     data = data_all.reshape(np.prod(data_all.shape[:2]), np.prod(data_all.shape[2:]))  # (111104, 204)
