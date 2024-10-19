@@ -17,7 +17,7 @@ from sklearn.decomposition import PCA
 import random
 import pickle
 import h5py
-#import hdf5storage
+import hdf5storage
 from sklearn import preprocessing
 import scipy.io as sio
 
@@ -113,33 +113,33 @@ def sampling(groundTruth):
     np.random.shuffle(whole_indices)
     return whole_indices
 
-# def load_data_HDF(image_file, label_file):
-#     """
-#     Loads hyperspectral image data and labels from HDF files.
+def load_data_HDF(image_file, label_file):
+    """
+    Loads hyperspectral image data and labels from HDF files.
     
-#     Parameters:
-#         image_file (str): Path to the image file.
-#         label_file (str): Path to the label file.
+    Parameters:
+        image_file (str): Path to the image file.
+        label_file (str): Path to the label file.
         
-#     Returns:
-#         tuple: Scaled data and ground truth labels.
-#     """
-#     image_data = hdf5storage.loadmat(image_file)
-#     label_data = hdf5storage.loadmat(label_file)
-#     data_all = image_data['chikusei']  # data_all: ndarray(2517, 2335, 128)
-#     label = label_data['GT'][0][0][0]  # label: (2517, 2335)
+    Returns:
+        tuple: Scaled data and ground truth labels.
+    """
+    image_data = hdf5storage.loadmat(image_file)
+    label_data = hdf5storage.loadmat(label_file)
+    data_all = image_data['chikusei']  # data_all: ndarray(2517, 2335, 128)
+    label = label_data['GT'][0][0][0]  # label: (2517, 2335)
 
-#     [nRow, nColumn, nBand] = data_all.shape
-#     print('chikusei', nRow, nColumn, nBand)
-#     gt = label.reshape(np.prod(label.shape[:2]), )
-#     del image_data, label_data, label
+    [nRow, nColumn, nBand] = data_all.shape
+    print('chikusei', nRow, nColumn, nBand)
+    gt = label.reshape(np.prod(label.shape[:2]), )
+    del image_data, label_data, label
 
-#     data_all = data_all.reshape(np.prod(data_all.shape[:2]), np.prod(data_all.shape[2:]))  # (111104, 204)
-#     print(data_all.shape)
-#     data_scaler = preprocessing.scale(data_all)
-#     data_scaler = data_scaler.reshape(2517, 2335, 128)
+    data_all = data_all.reshape(np.prod(data_all.shape[:2]), np.prod(data_all.shape[2:]))  # (111104, 204)
+    print(data_all.shape)
+    data_scaler = preprocessing.scale(data_all)
+    data_scaler = data_scaler.reshape(2517, 2335, 128)
 
-#     return data_scaler, gt
+    return data_scaler, gt
 
 def load_data(image_file, label_file):
     """
@@ -152,30 +152,19 @@ def load_data(image_file, label_file):
     Returns:
         tuple: Scaled data and ground truth labels.
     """
-    # image_data = sio.loadmat(image_file)
-    # label_data = sio.loadmat(label_file)
+    image_data = sio.loadmat(image_file)
+    label_data = sio.loadmat(label_file)
 
-    f = h5py.File(image_file, 'r')
-    # Assuming the data key is the same as the file name without extension
-    data_key = list(f.keys())[0]  # Change this if the key is known
-    data_all = np.array(f[data_key])
-    print(data_all.shape)
     
-    f = h5py.File(label_file, 'r')
-    # Assuming the label key is the same as the file name without extension
-    label_key = list(f.keys())[0]  # Change this if the key is known
-    label = np.array(f[label_key])
-    print(label_key.shape)
-    
-
-    # data_key = image_file.split('/')[-1].split('.')[0]
-    # label_key = label_file.split('/')[-1].split('.')[0]
-    # data_all = image_data[data_key]
-    # label = label_data[label_key]
+    data_key = image_file.split('/')[-1].split('.')[0]
+    label_key = label_file.split('/')[-1].split('.')[0]
+    data_all = image_data[data_key]
+    label = label_data[label_key]
     gt = label.reshape(np.prod(label.shape[:2]), )
 
     data = data_all.reshape(np.prod(data_all.shape[:2]), np.prod(data_all.shape[2:]))  # (111104, 204)
     print(data.shape)
+    
     data_scaler = preprocessing.scale(data)
     data_scaler = data_scaler.reshape(data_all.shape[0], data_all.shape[1], data_all.shape[2])
 
@@ -192,13 +181,13 @@ def getDataAndLabels(trainfn1, trainfn2):
     Returns:
         dict: A dictionary containing the data, labels, and set information.
     """
-    # if ('Chikusei' in trainfn1 and 'Chikusei' in trainfn2):
-    #     Data_Band_Scaler, gt = load_data_HDF(trainfn1, trainfn2)
-    # else:
-    #     Data_Band_Scaler, gt = load_data(trainfn1, trainfn2)
+    
+    if ('Chikusei' in trainfn1 and 'Chikusei' in trainfn2):
+        Data_Band_Scaler, gt = load_data_HDF(trainfn1, trainfn2)
+    else:
+        Data_Band_Scaler, gt = load_data(trainfn1, trainfn2)
 
-    Data_Band_Scaler, gt = load_data(trainfn1, trainfn2)
-
+    
 
     del trainfn1, trainfn2
     [nRow, nColumn, nBand] = Data_Band_Scaler.shape
