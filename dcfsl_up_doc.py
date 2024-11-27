@@ -130,22 +130,33 @@ def get_train_test_loader(Data_Band_Scaler, GroundTruth, class_num, shot_num_per
 
 
 def get_target_dataset(Data_Band_Scaler, GroundTruth, class_num, shot_num_per_class):
-    train_loader, test_loader, imdb_da_train,G,RandPerm,Row, Column,nTrain = get_train_test_loader(Data_Band_Scaler=Data_Band_Scaler,  GroundTruth=GroundTruth, \
-                                                                     class_num=class_num,shot_num_per_class=shot_num_per_class)  # 9 classes and 5 labeled samples per class
-    train_datas, train_labels = train_loader.__iter__().next()
+
+    (train_loader, 
+     test_loader, 
+     imdb_da_train,
+     G,
+     RandPerm,
+     Row, 
+     Column,
+     nTrain) = get_train_test_loader(Data_Band_Scaler=Data_Band_Scaler,  
+                                     GroundTruth=GroundTruth, 
+                                    class_num=class_num,
+                                    shot_num_per_class=shot_num_per_class)  # 9 classes and 5 labeled samples per class
+    
+    train_datas, train_labels = next(iter(train_loader))
     print('train labels:', train_labels)
     print('size of train datas:', train_datas.shape) # size of train datas: torch.Size([45, 103, 9, 9])
 
-    print(imdb_da_train.keys())
-    print(imdb_da_train['data'].shape)  # (9, 9, 100, 225)
-    print(imdb_da_train['Labels'])
+    print(f'imdb_da_train keys: {imdb_da_train.keys()}')
+    print(f'imdb_da_train data shape: {imdb_da_train['data'].shape}')  # (9, 9, 100, 225)
+    print(f'imdb_da_train data labels: {imdb_da_train['Labels']}')
     del Data_Band_Scaler, GroundTruth
 
     # target data with data augmentation
     target_da_datas = np.transpose(imdb_da_train['data'], (3, 2, 0, 1))  # (9,9,100, 1800)->(1800, 100, 9, 9)
-    print(target_da_datas.shape)
+    print(f'Target data shape(with augmentation): {target_da_datas.shape}')
     target_da_labels = imdb_da_train['Labels']  # (1800,)
-    print('target data augmentation label:', target_da_labels)
+    print(f'target data augmentation label: {target_da_labels}')
 
     # metatrain data for few-shot classification
     target_da_train_set = {}
