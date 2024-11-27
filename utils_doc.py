@@ -216,6 +216,7 @@ def load_data(image_file, label_file):
     data_key = image_file.split('/')[-1].split('.')[0]
     label_key = label_file.split('/')[-1].split('.')[0]
     data_key = data_key[0].lower() + data_key[1:]
+    label_key = label_key[0].lower() + label_key[1:]
     
     data_all = image_data[data_key]
     GroundTruth = label_data[label_key]
