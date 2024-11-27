@@ -148,8 +148,8 @@ def get_target_dataset(Data_Band_Scaler, GroundTruth, class_num, shot_num_per_cl
     print('size of train datas:', train_datas.shape) # size of train datas: torch.Size([45, 103, 9, 9])
 
     print(f'imdb_da_train keys: {imdb_da_train.keys()}')
-    print(f'imdb_da_train data shape: {imdb_da_train['data'].shape}')  # (9, 9, 100, 225)
-    print(f'imdb_da_train data labels: {imdb_da_train['Labels']}')
+    print(f"imdb_da_train data shape: {imdb_da_train['data'].shape}")  # (9, 9, 100, 225)
+    print(f"imdb_da_train data labels: {imdb_da_train['Labels']}")
     del Data_Band_Scaler, GroundTruth
 
     # target data with data augmentation
