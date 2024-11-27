@@ -286,352 +286,352 @@ The target domain dataset is loaded and processed to prepare it for training and
 # Data_Band_Scaler, GroundTruth = utils.load_data(test_data, test_label)
 
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-crossEntropy = nn.CrossEntropyLoss().to(device)
-domain_criterion = nn.BCEWithLogitsLoss().to(device)
+# crossEntropy = nn.CrossEntropyLoss().to(device)
+# domain_criterion = nn.BCEWithLogitsLoss().to(device)
 
-# run 10 times
-nDataSet = 1
-acc = np.zeros([nDataSet, 1])
-A = np.zeros([nDataSet, CLASS_NUM])
-k = np.zeros([nDataSet, 1])
-best_predict_all = []
-best_acc_all = 0.0
-best_G,best_RandPerm,best_Row, best_Column,best_nTrain = None,None,None,None,None
+# # run 10 times
+# nDataSet = 1
+# acc = np.zeros([nDataSet, 1])
+# A = np.zeros([nDataSet, CLASS_NUM])
+# k = np.zeros([nDataSet, 1])
+# best_predict_all = []
+# best_acc_all = 0.0
+# best_G,best_RandPerm,best_Row, best_Column,best_nTrain = None,None,None,None,None
 
-seeds = [1330, 1220, 1336, 1337, 1224, 1236, 1226, 1235, 1233, 1229]
-for iDataSet in range(nDataSet):
+# seeds = [1330, 1220, 1336, 1337, 1224, 1236, 1226, 1235, 1233, 1229]
+# for iDataSet in range(nDataSet):
 
-    # load target domain data for training and testing
-    np.random.seed(seeds[iDataSet])
+#     # load target domain data for training and testing
+#     np.random.seed(seeds[iDataSet])
 
-    (train_loader, 
-     test_loader, 
-     target_da_metatrain_data, 
-     target_loader,
-     G,
-     RandPerm,
-     Row, 
-     Column,
-     nTrain) = get_target_dataset(Data_Band_Scaler=Data_Band_Scaler, 
-                                  GroundTruth=GroundTruth,
-                                  class_num=TEST_CLASS_NUM, 
-                                  shot_num_per_class=TEST_LSAMPLE_NUM_PER_CLASS)
+#     (train_loader, 
+#      test_loader, 
+#      target_da_metatrain_data, 
+#      target_loader,
+#      G,
+#      RandPerm,
+#      Row, 
+#      Column,
+#      nTrain) = get_target_dataset(Data_Band_Scaler=Data_Band_Scaler, 
+#                                   GroundTruth=GroundTruth,
+#                                   class_num=TEST_CLASS_NUM, 
+#                                   shot_num_per_class=TEST_LSAMPLE_NUM_PER_CLASS)
     
 
-    # model
-    feature_encoder = models.Network(FEATURE_DIM, 
-                                     SRC_INPUT_DIMENSION, 
-                                     TAR_INPUT_DIMENSION, 
-                                     N_DIMENSION, 
-                                     CLASS_NUM)
+#     # model
+#     feature_encoder = models.Network(FEATURE_DIM, 
+#                                      SRC_INPUT_DIMENSION, 
+#                                      TAR_INPUT_DIMENSION, 
+#                                      N_DIMENSION, 
+#                                      CLASS_NUM)
     
-    domain_classifier = models.DomainClassifier()
+#     domain_classifier = models.DomainClassifier()
 
-    random_layer = models.RandomLayer([FEATURE_DIM, CLASS_NUM], 1024) 
+#     random_layer = models.RandomLayer([FEATURE_DIM, CLASS_NUM], 1024) 
 
-    feature_encoder.apply(utils.weights_init)
-    domain_classifier.apply(utils.weights_init)
+#     feature_encoder.apply(utils.weights_init)
+#     domain_classifier.apply(utils.weights_init)
 
-    feature_encoder.to(device)
-    domain_classifier.to(device)
-    random_layer.to(device)  # Random layer
+#     feature_encoder.to(device)
+#     domain_classifier.to(device)
+#     random_layer.to(device)  # Random layer
 
-    feature_encoder.train()
-    domain_classifier.train()
+#     feature_encoder.train()
+#     domain_classifier.train()
 
 
-    # optimizer
-    feature_encoder_optim = torch.optim.Adam(feature_encoder.parameters(), lr=LEARNING_RATE)
-    domain_classifier_optim = torch.optim.Adam(domain_classifier.parameters(), lr=LEARNING_RATE)
+#     # optimizer
+#     feature_encoder_optim = torch.optim.Adam(feature_encoder.parameters(), lr=LEARNING_RATE)
+#     domain_classifier_optim = torch.optim.Adam(domain_classifier.parameters(), lr=LEARNING_RATE)
 
     
 
-    print("Training...")
+#     print("Training...")
 
-    last_accuracy = 0.0
-    best_episdoe = 0
-    train_loss = []
-    test_acc = []
-    running_D_loss, running_F_loss = 0.0, 0.0
-    running_label_loss = 0
-    running_domain_loss = 0
-    total_hit, total_num = 0.0, 0.0
-    test_acc_list = []
+#     last_accuracy = 0.0
+#     best_episdoe = 0
+#     train_loss = []
+#     test_acc = []
+#     running_D_loss, running_F_loss = 0.0, 0.0
+#     running_label_loss = 0
+#     running_domain_loss = 0
+#     total_hit, total_num = 0.0, 0.0
+#     test_acc_list = []
 
-    source_iter = iter(source_loader)
-    target_iter = iter(target_loader)
-    len_dataloader = min(len(source_loader), len(target_loader))
+#     source_iter = iter(source_loader)
+#     target_iter = iter(target_loader)
+#     len_dataloader = min(len(source_loader), len(target_loader))
 
-    train_start = time.time()
+#     train_start = time.time()
     
-    for episode in range(10000):  # EPISODE = 90000
+#     for episode in range(10000):  # EPISODE = 90000
 
-        # get domain adaptation data from  source domain and target domain
-        try:
-            source_data, source_label = source_iter.next()
-        except Exception as err:
-            source_iter = iter(source_loader)
-            source_data, source_label = source_iter.next()
+#         # get domain adaptation data from  source domain and target domain
+#         try:
+#             source_data, source_label = source_iter.next()
+#         except Exception as err:
+#             source_iter = iter(source_loader)
+#             source_data, source_label = source_iter.next()
 
-        try:
-            target_data, target_label = target_iter.next()
-        except Exception as err:
-            target_iter = iter(target_loader)
-            target_data, target_label = target_iter.next()
+#         try:
+#             target_data, target_label = target_iter.next()
+#         except Exception as err:
+#             target_iter = iter(target_loader)
+#             target_data, target_label = target_iter.next()
 
-        # source domain few-shot + domain adaptation
-        if episode % 2 == 0:
-            '''Few-shot classification for source domain data set'''
-            # generate task for few shot classification
-            task = utils.Task(metatrain_data, CLASS_NUM=5, SHOT_NUM_PER_CLASS=1, QUERY_NUM_PER_CLASS=15)  # 5， 1，15
+#         # source domain few-shot + domain adaptation
+#         if episode % 2 == 0:
+#             '''Few-shot classification for source domain data set'''
+#             # generate task for few shot classification
+#             task = utils.Task(metatrain_data, CLASS_NUM=5, SHOT_NUM_PER_CLASS=1, QUERY_NUM_PER_CLASS=15)  # 5， 1，15
 
-            # prepare dataloaders
-            support_dataloader = utils.get_HBKC_data_loader(task, num_per_class=SHOT_NUM_PER_CLASS, split="train", shuffle=False)
-            query_dataloader = utils.get_HBKC_data_loader(task, num_per_class=QUERY_NUM_PER_CLASS, split="test", shuffle=True)
+#             # prepare dataloaders
+#             support_dataloader = utils.get_HBKC_data_loader(task, num_per_class=SHOT_NUM_PER_CLASS, split="train", shuffle=False)
+#             query_dataloader = utils.get_HBKC_data_loader(task, num_per_class=QUERY_NUM_PER_CLASS, split="test", shuffle=True)
 
-            # extract data samples
-            supports, support_labels = support_dataloader.__iter__().next()  # (5, 100, 9, 9)
-            querys, query_labels = query_dataloader.__iter__().next()  # (75,100,9,9)
+#             # extract data samples
+#             supports, support_labels = support_dataloader.__iter__().next()  # (5, 100, 9, 9)
+#             querys, query_labels = query_dataloader.__iter__().next()  # (75,100,9,9)
 
-            # encoding feature -> Encoding feature tensor, classfier output tensor
-            support_features, support_outputs = feature_encoder(supports.to(device))  # torch.Size([409, 32, 7, 3, 3])
-            query_features, query_outputs = feature_encoder(querys.to(device))  # torch.Size([409, 32, 7, 3, 3])
-            target_features, target_outputs = feature_encoder(target_data.to(device), domain='target')  # torch.Size([409, 32, 7, 3, 3])
+#             # encoding feature -> Encoding feature tensor, classfier output tensor
+#             support_features, support_outputs = feature_encoder(supports.to(device))  # torch.Size([409, 32, 7, 3, 3])
+#             query_features, query_outputs = feature_encoder(querys.to(device))  # torch.Size([409, 32, 7, 3, 3])
+#             target_features, target_outputs = feature_encoder(target_data.to(device), domain='target')  # torch.Size([409, 32, 7, 3, 3])
 
-            # Prototype network
-            if SHOT_NUM_PER_CLASS > 1:
-                support_proto = support_features.reshape(CLASS_NUM, SHOT_NUM_PER_CLASS, -1).mean(dim=1)  # (9, 160)
-            else:
-                support_proto = support_features
+#             # Prototype network
+#             if SHOT_NUM_PER_CLASS > 1:
+#                 support_proto = support_features.reshape(CLASS_NUM, SHOT_NUM_PER_CLASS, -1).mean(dim=1)  # (9, 160)
+#             else:
+#                 support_proto = support_features
 
-            # fsl_loss
-            logits = euclidean_metric(query_features, support_proto)
-            f_loss = crossEntropy(logits, query_labels.to(device))
+#             # fsl_loss
+#             logits = euclidean_metric(query_features, support_proto)
+#             f_loss = crossEntropy(logits, query_labels.to(device))
 
-            '''domain adaptation'''
-            # calculate domain adaptation loss
-            features = torch.cat([support_features, query_features, target_features], dim=0)
-            outputs = torch.cat((support_outputs, query_outputs, target_outputs), dim=0)
-            softmax_output = nn.Softmax(dim=1)(outputs)
+#             '''domain adaptation'''
+#             # calculate domain adaptation loss
+#             features = torch.cat([support_features, query_features, target_features], dim=0)
+#             outputs = torch.cat((support_outputs, query_outputs, target_outputs), dim=0)
+#             softmax_output = nn.Softmax(dim=1)(outputs)
 
-            # set label: source 1; target 0
-            domain_label = torch.zeros([supports.shape[0] + querys.shape[0] + target_data.shape[0], 1]).to(device)
-            domain_label[:supports.shape[0] + querys.shape[0]] = 1  # torch.Size([225=9*20+9*4, 100, 9, 9])
+#             # set label: source 1; target 0
+#             domain_label = torch.zeros([supports.shape[0] + querys.shape[0] + target_data.shape[0], 1]).to(device)
+#             domain_label[:supports.shape[0] + querys.shape[0]] = 1  # torch.Size([225=9*20+9*4, 100, 9, 9])
 
-            randomlayer_out = random_layer.forward([features, softmax_output])  # torch.Size([225, 1024=32*7*3*3])
+#             randomlayer_out = random_layer.forward([features, softmax_output])  # torch.Size([225, 1024=32*7*3*3])
 
-            domain_logits = domain_classifier(randomlayer_out, episode)
-            domain_loss = domain_criterion(domain_logits, domain_label)
+#             domain_logits = domain_classifier(randomlayer_out, episode)
+#             domain_loss = domain_criterion(domain_logits, domain_label)
 
-            # total_loss = fsl_loss + domain_loss
-            loss = f_loss + domain_loss  # 0.01
+#             # total_loss = fsl_loss + domain_loss
+#             loss = f_loss + domain_loss  # 0.01
 
-            # Update parameters
-            feature_encoder.zero_grad()
-            domain_classifier.zero_grad()
-            loss.backward()
-            feature_encoder_optim.step()
-            domain_classifier_optim.step()
+#             # Update parameters
+#             feature_encoder.zero_grad()
+#             domain_classifier.zero_grad()
+#             loss.backward()
+#             feature_encoder_optim.step()
+#             domain_classifier_optim.step()
 
-            total_hit += torch.sum(torch.argmax(logits, dim=1).cpu() == query_labels).item()
-            total_num += querys.shape[0]
-
-
+#             total_hit += torch.sum(torch.argmax(logits, dim=1).cpu() == query_labels).item()
+#             total_num += querys.shape[0]
 
 
-        # target domain few-shot + domain adaptation--------------------------------------------------
-        else:
-            '''Few-shot classification for target domain data set'''
-            # get few-shot classification samples
-            task = utils.Task(target_da_metatrain_data, 
-                              TEST_CLASS_NUM, 
-                              SHOT_NUM_PER_CLASS, 
-                              QUERY_NUM_PER_CLASS)  # 5， 1，15
+
+
+#         # target domain few-shot + domain adaptation--------------------------------------------------
+#         else:
+#             '''Few-shot classification for target domain data set'''
+#             # get few-shot classification samples
+#             task = utils.Task(target_da_metatrain_data, 
+#                               TEST_CLASS_NUM, 
+#                               SHOT_NUM_PER_CLASS, 
+#                               QUERY_NUM_PER_CLASS)  # 5， 1，15
             
-            support_dataloader = utils.get_HBKC_data_loader(task, 
-                                                            num_per_class=SHOT_NUM_PER_CLASS, 
-                                                            split="train", 
-                                                            shuffle=False)
+#             support_dataloader = utils.get_HBKC_data_loader(task, 
+#                                                             num_per_class=SHOT_NUM_PER_CLASS, 
+#                                                             split="train", 
+#                                                             shuffle=False)
             
-            query_dataloader = utils.get_HBKC_data_loader(task, 
-                                                          num_per_class=QUERY_NUM_PER_CLASS, 
-                                                          split="test", 
-                                                          shuffle=True)
+#             query_dataloader = utils.get_HBKC_data_loader(task, 
+#                                                           num_per_class=QUERY_NUM_PER_CLASS, 
+#                                                           split="test", 
+#                                                           shuffle=True)
 
-            # sample datas
-            supports, support_labels = support_dataloader.__iter__().next()  # (5, 100, 9, 9)
-            querys, query_labels = query_dataloader.__iter__().next()  # (75,100,9,9)
+#             # sample datas
+#             supports, support_labels = support_dataloader.__iter__().next()  # (5, 100, 9, 9)
+#             querys, query_labels = query_dataloader.__iter__().next()  # (75,100,9,9)
 
-            # calculate features
-            support_features, support_outputs = feature_encoder(supports.to(device),  domain='target')  # torch.Size([409, 32, 7, 3, 3])
-            query_features, query_outputs = feature_encoder(querys.to(device), domain='target')  # torch.Size([409, 32, 7, 3, 3])
-            source_features, source_outputs = feature_encoder(source_data.to(device))  # torch.Size([409, 32, 7, 3, 3])
+#             # calculate features
+#             support_features, support_outputs = feature_encoder(supports.to(device),  domain='target')  # torch.Size([409, 32, 7, 3, 3])
+#             query_features, query_outputs = feature_encoder(querys.to(device), domain='target')  # torch.Size([409, 32, 7, 3, 3])
+#             source_features, source_outputs = feature_encoder(source_data.to(device))  # torch.Size([409, 32, 7, 3, 3])
 
-            # Prototype network
-            if SHOT_NUM_PER_CLASS > 1:
-                support_proto = support_features.reshape(CLASS_NUM, SHOT_NUM_PER_CLASS, -1).mean(dim=1)  # (9, 160)
-            else:
-                support_proto = support_features
+#             # Prototype network
+#             if SHOT_NUM_PER_CLASS > 1:
+#                 support_proto = support_features.reshape(CLASS_NUM, SHOT_NUM_PER_CLASS, -1).mean(dim=1)  # (9, 160)
+#             else:
+#                 support_proto = support_features
 
-            # fsl_loss
-            logits = euclidean_metric(query_features, support_proto)
-            f_loss = crossEntropy(logits, query_labels.to(device))
+#             # fsl_loss
+#             logits = euclidean_metric(query_features, support_proto)
+#             f_loss = crossEntropy(logits, query_labels.to(device))
 
-            '''domain adaptation'''
-            features = torch.cat([support_features, query_features, source_features], dim=0)
-            outputs = torch.cat((support_outputs, query_outputs, source_outputs), dim=0)
-            softmax_output = nn.Softmax(dim=1)(outputs)
+#             '''domain adaptation'''
+#             features = torch.cat([support_features, query_features, source_features], dim=0)
+#             outputs = torch.cat((support_outputs, query_outputs, source_outputs), dim=0)
+#             softmax_output = nn.Softmax(dim=1)(outputs)
 
-            domain_label = torch.zeros([supports.shape[0] + querys.shape[0] + source_features.shape[0], 1]).to(device)
-            domain_label[supports.shape[0] + querys.shape[0]:] = 1
+#             domain_label = torch.zeros([supports.shape[0] + querys.shape[0] + source_features.shape[0], 1]).to(device)
+#             domain_label[supports.shape[0] + querys.shape[0]:] = 1
 
-            randomlayer_out = random_layer.forward([features, softmax_output])  # torch.Size([225, 1024=32*7*3*3])
+#             randomlayer_out = random_layer.forward([features, softmax_output])  # torch.Size([225, 1024=32*7*3*3])
 
-            domain_logits = domain_classifier(randomlayer_out, episode)  # , label_logits
-            domain_loss = domain_criterion(domain_logits, domain_label)
+#             domain_logits = domain_classifier(randomlayer_out, episode)  # , label_logits
+#             domain_loss = domain_criterion(domain_logits, domain_label)
 
-            # total_loss = fsl_loss + domain_loss
-            loss = f_loss + domain_loss  # 0.01 0.5=78;0.25=80;0.01=80
+#             # total_loss = fsl_loss + domain_loss
+#             loss = f_loss + domain_loss  # 0.01 0.5=78;0.25=80;0.01=80
 
-            # Update parameters
-            feature_encoder.zero_grad()
-            domain_classifier.zero_grad()
-            loss.backward()
-            feature_encoder_optim.step()
-            domain_classifier_optim.step()
+#             # Update parameters
+#             feature_encoder.zero_grad()
+#             domain_classifier.zero_grad()
+#             loss.backward()
+#             feature_encoder_optim.step()
+#             domain_classifier_optim.step()
 
-            total_hit += torch.sum(torch.argmax(logits, dim=1).cpu() == query_labels).item()
-            total_num += querys.shape[0]
+#             total_hit += torch.sum(torch.argmax(logits, dim=1).cpu() == query_labels).item()
+#             total_num += querys.shape[0]
 
-        if (episode + 1) % 100 == 0:  # display
-            train_loss.append(loss.item())
-            print('episode {:>3d}:  domain loss: {:6.4f}, fsl loss: {:6.4f}, acc {:6.4f}, loss: {:6.4f}'.format(episode + 1, \
-                                                                                                                domain_loss.item(),
-                                                                                                                f_loss.item(),
-                                                                                                                total_hit / total_num,
-                                                                                                                loss.item()))
+#         if (episode + 1) % 100 == 0:  # display
+#             train_loss.append(loss.item())
+#             print('episode {:>3d}:  domain loss: {:6.4f}, fsl loss: {:6.4f}, acc {:6.4f}, loss: {:6.4f}'.format(episode + 1, \
+#                                                                                                                 domain_loss.item(),
+#                                                                                                                 f_loss.item(),
+#                                                                                                                 total_hit / total_num,
+#                                                                                                                 loss.item()))
 
-        if (episode + 1) % 1000 == 0 or episode == 0:
+#         if (episode + 1) % 1000 == 0 or episode == 0:
 
-            # testing..........
-            print("Testing ...")
-            # Setting evaluation mode
-            train_end = time.time()
-            feature_encoder.eval()
+#             # testing..........
+#             print("Testing ...")
+#             # Setting evaluation mode
+#             train_end = time.time()
+#             feature_encoder.eval()
 
-            # Initializations
-            total_rewards = 0
-            counter = 0 # count the total number of test sample
-            accuracies = [] # record accuracy for each batch
-            predict = np.array([], dtype=np.int64)
-            labels = np.array([], dtype=np.int64)
+#             # Initializations
+#             total_rewards = 0
+#             counter = 0 # count the total number of test sample
+#             accuracies = [] # record accuracy for each batch
+#             predict = np.array([], dtype=np.int64)
+#             labels = np.array([], dtype=np.int64)
 
-            # Extract feature for training data
-            train_datas, train_labels = train_loader.__iter__().next()
-            train_features, _ = feature_encoder(Variable(train_datas).to(device), domain='target')  # (45, 160)
+#             # Extract feature for training data
+#             train_datas, train_labels = train_loader.__iter__().next()
+#             train_features, _ = feature_encoder(Variable(train_datas).to(device), domain='target')  # (45, 160)
             
-            # Feature normalization
-            max_value = train_features.max()  # 89.67885
-            min_value = train_features.min()  # -57.92479
-            print(f'Train Feature max value: {max_value.item()}')
-            print(f'Train Feature min value: {min_value.item()}')
+#             # Feature normalization
+#             max_value = train_features.max()  # 89.67885
+#             min_value = train_features.min()  # -57.92479
+#             print(f'Train Feature max value: {max_value.item()}')
+#             print(f'Train Feature min value: {min_value.item()}')
 
-            train_features = (train_features - min_value) * 1.0 / (max_value - min_value)
+#             train_features = (train_features - min_value) * 1.0 / (max_value - min_value)
 
-            ''' Train KNN classifier '''
+#             ''' Train KNN classifier '''
 
-            # fit the classifier
-            KNN_classifier = KNeighborsClassifier(n_neighbors=1)
-            KNN_classifier.fit(train_features.cpu().detach().numpy(), train_labels)  # .cpu().detach().numpy()
+#             # fit the classifier
+#             KNN_classifier = KNeighborsClassifier(n_neighbors=1)
+#             KNN_classifier.fit(train_features.cpu().detach().numpy(), train_labels)  # .cpu().detach().numpy()
 
-            # Test KNN classifier
+#             # Test KNN classifier
 
-            # iterate through the test batches
-            for test_datas, test_labels in test_loader:
-                batch_size = test_labels.shape[0]
+#             # iterate through the test batches
+#             for test_datas, test_labels in test_loader:
+#                 batch_size = test_labels.shape[0]
 
-                # Extract and normalize test batches
-                test_features, _ = feature_encoder(Variable(test_datas).to(device), domain='target')  # (100, 160)
-                test_features = (test_features - min_value) * 1.0 / (max_value - min_value)
-                predict_labels = KNN_classifier.predict(test_features.cpu().detach().numpy())
-                test_labels = test_labels.numpy()
-                rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(batch_size)]
+#                 # Extract and normalize test batches
+#                 test_features, _ = feature_encoder(Variable(test_datas).to(device), domain='target')  # (100, 160)
+#                 test_features = (test_features - min_value) * 1.0 / (max_value - min_value)
+#                 predict_labels = KNN_classifier.predict(test_features.cpu().detach().numpy())
+#                 test_labels = test_labels.numpy()
+#                 rewards = [1 if predict_labels[j] == test_labels[j] else 0 for j in range(batch_size)]
 
-                # predict labels
-                total_rewards += np.sum(rewards)
-                counter += batch_size
+#                 # predict labels
+#                 total_rewards += np.sum(rewards)
+#                 counter += batch_size
 
-                predict = np.append(predict, predict_labels)
-                labels = np.append(labels, test_labels)
+#                 predict = np.append(predict, predict_labels)
+#                 labels = np.append(labels, test_labels)
 
-                accuracy = total_rewards / 1.0 / counter  #
-                accuracies.append(accuracy)
+#                 accuracy = total_rewards / 1.0 / counter  #
+#                 accuracies.append(accuracy)
 
-            test_accuracy = 100. * total_rewards / len(test_loader.dataset)
+#             test_accuracy = 100. * total_rewards / len(test_loader.dataset)
 
-            print('\t\tAccuracy: {}/{} ({:.2f}%)\n'.format( total_rewards, len(test_loader.dataset),
-                100. * total_rewards / len(test_loader.dataset)))
-            test_end = time.time()
+#             print('\t\tAccuracy: {}/{} ({:.2f}%)\n'.format( total_rewards, len(test_loader.dataset),
+#                 100. * total_rewards / len(test_loader.dataset)))
+#             test_end = time.time()
 
-            # Training mode
-            feature_encoder.train()
-            if test_accuracy > last_accuracy:
-                # save networks
-                torch.save(feature_encoder.state_dict(),str( "checkpoints/DFSL_feature_encoder_" + "UP_" +str(iDataSet) +"iter_" + str(TEST_LSAMPLE_NUM_PER_CLASS) +"shot.pkl"))
-                print("save networks for episode:",episode+1)
-                last_accuracy = test_accuracy
-                best_episdoe = episode
+#             # Training mode
+#             feature_encoder.train()
+#             if test_accuracy > last_accuracy:
+#                 # save networks
+#                 torch.save(feature_encoder.state_dict(),str( "checkpoints/DFSL_feature_encoder_" + "UP_" +str(iDataSet) +"iter_" + str(TEST_LSAMPLE_NUM_PER_CLASS) +"shot.pkl"))
+#                 print("save networks for episode:",episode+1)
+#                 last_accuracy = test_accuracy
+#                 best_episdoe = episode
 
-                acc[iDataSet] = 100. * total_rewards / len(test_loader.dataset)
-                OA = acc
-                C = metrics.confusion_matrix(labels, predict)
-                A[iDataSet, :] = np.diag(C) / np.sum(C, 1, dtype=np.float)
+#                 acc[iDataSet] = 100. * total_rewards / len(test_loader.dataset)
+#                 OA = acc
+#                 C = metrics.confusion_matrix(labels, predict)
+#                 A[iDataSet, :] = np.diag(C) / np.sum(C, 1, dtype=np.float)
 
-                k[iDataSet] = metrics.cohen_kappa_score(labels, predict)
+#                 k[iDataSet] = metrics.cohen_kappa_score(labels, predict)
 
-            print(f'best episode:[{best_episdoe + 1}], best accuracy={last_accuracy}')
+#             print(f'best episode:[{best_episdoe + 1}], best accuracy={last_accuracy}')
 
-    if test_accuracy > best_acc_all:
-        best_predict_all = predict
-        best_G,best_RandPerm,best_Row, best_Column,best_nTrain = G, RandPerm, Row, Column, nTrain
+#     if test_accuracy > best_acc_all:
+#         best_predict_all = predict
+#         best_G,best_RandPerm,best_Row, best_Column,best_nTrain = G, RandPerm, Row, Column, nTrain
 
-    print(f'iter:{iDataSet} best episode:[{best_episdoe + 1}], best accuracy={last_accuracy}')
-    print('***********************************************************************************')
+#     print(f'iter:{iDataSet} best episode:[{best_episdoe + 1}], best accuracy={last_accuracy}')
+#     print('***********************************************************************************')
 
-AA = np.mean(A, 1)
+# AA = np.mean(A, 1)
 
-AAMean = np.mean(AA,0)
-AAStd = np.std(AA)
+# AAMean = np.mean(AA,0)
+# AAStd = np.std(AA)
 
-AMean = np.mean(A, 0)
-AStd = np.std(A, 0)
+# AMean = np.mean(A, 0)
+# AStd = np.std(A, 0)
 
-OAMean = np.mean(acc)
-OAStd = np.std(acc)
+# OAMean = np.mean(acc)
+# OAStd = np.std(acc)
 
-kMean = np.mean(k)
-kStd = np.std(k)
-
-
-print ("train time per DataSet(s): " + "{:.5f}".format(train_end-train_start))
-print("test time per DataSet(s): " + "{:.5f}".format(test_end-train_end))
-print ("average OA: " + "{:.2f}".format( OAMean) + " +- " + "{:.2f}".format( OAStd))
-print ("average AA: " + "{:.2f}".format(100 * AAMean) + " +- " + "{:.2f}".format(100 * AAStd))
-print ("average kappa: " + "{:.4f}".format(100 *kMean) + " +- " + "{:.4f}".format(100 *kStd))
-print ("accuracy for each class: ")
-
-for i in range(CLASS_NUM):
-    print ("Class " + str(i) + ": " + "{:.2f}".format(100 * AMean[i]) + " +- " + "{:.2f}".format(100 * AStd[i]))
+# kMean = np.mean(k)
+# kStd = np.std(k)
 
 
-best_iDataset = 0
-for i in range(len(acc)):
-    print(f'{i}:{acc[i]}')
-    if acc[i] > acc[best_iDataset]:
-        best_iDataset = i
-print(f'best acc all={acc[best_iDataset]}')
+# print ("train time per DataSet(s): " + "{:.5f}".format(train_end-train_start))
+# print("test time per DataSet(s): " + "{:.5f}".format(test_end-train_end))
+# print ("average OA: " + "{:.2f}".format( OAMean) + " +- " + "{:.2f}".format( OAStd))
+# print ("average AA: " + "{:.2f}".format(100 * AAMean) + " +- " + "{:.2f}".format(100 * AAStd))
+# print ("average kappa: " + "{:.4f}".format(100 *kMean) + " +- " + "{:.4f}".format(100 *kStd))
+# print ("accuracy for each class: ")
+
+# for i in range(CLASS_NUM):
+#     print ("Class " + str(i) + ": " + "{:.2f}".format(100 * AMean[i]) + " +- " + "{:.2f}".format(100 * AStd[i]))
+
+
+# best_iDataset = 0
+# for i in range(len(acc)):
+#     print(f'{i}:{acc[i]}')
+#     if acc[i] > acc[best_iDataset]:
+#         best_iDataset = i
+# print(f'best acc all={acc[best_iDataset]}')
 
 #################classification map################################
 
