@@ -295,9 +295,10 @@ class RandomLayer(nn.Module):
             output_dim (int): The number of output dimensions after transformation.
         """
         super(RandomLayer, self).__init__()
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.input_num = len(input_dim_list)  # Number of input tensors
         self.output_dim = output_dim  # Set output dimension
-        self.random_matrix = [torch.randn(input_dim_list[i], output_dim) for i in range(self.input_num)]  # Create random matrices
+        self.random_matrix = [torch.randn(input_dim_list[i], output_dim).to(device) for i in range(self.input_num)]  # Create random matrices
 
     def forward(self, input_list):
         """
